@@ -1,0 +1,24 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+@layer base {
+  @font-face {
+    font-family: 'Nordique';
+    src: local('Nordique'), local('Nordique-Regular');
+    /* Fallback added in case Nordique isn't loaded */
+  }
+
+  body {
+    @apply bg-navy-900 text-white font-sans tracking-wide antialiased;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-navy-800/80 backdrop-blur-md border border-slate-700/50 rounded-xl shadow-xl;
+  }
+  
+  .glass-panel-hover {
+    @apply bg-navy-800/80 backdrop-blur-md border border-slate-700/50 rounded-xl shadow-xl transition-all duration-300 hover:border-slate-500/50 hover:shadow-2xl hover:-translate-y-1;
+  }
+}

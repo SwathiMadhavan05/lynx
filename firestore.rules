@@ -1,0 +1,48 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isManager() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/staff/$(request.auth.uid)).data.role == 'manager';
+    }
+
+    // ─── incidents ────────────────────────────────────────────────────────────
+    // Any authenticated staff can read and write incidents.
+    // Only managers can delete incidents.
+    match /incidents/{incidentId} {
+      allow read, create, update: if isAuthenticated();
+      allow delete: if isManager();
+    }
+
+    // ─── cameras ──────────────────────────────────────────────────────────────
+    // Cameras are read-only for all authenticated staff.
+    // Only managers (via Admin SDK / console) can modify cameras.
+    match /cameras/{cameraId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Managed via Admin SDK only
+    }
+
+    // ─── staff ────────────────────────────────────────────────────────────────
+    // Staff can read all staff docs. Staff can only write their own doc
+    // (e.g. to save their FCM token). Managers can write any staff doc.
+    match /staff/{staffId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() &&
+        (request.auth.uid == staffId || isManager());
+    }
+
+    // ─── audit_logs ───────────────────────────────────────────────────────────
+    // Append-only: authenticated staff can read and create, but NOT update or delete.
+    match /audit_logs/{logId} {
+      allow read, create: if isAuthenticated();
+      allow update, delete: if false;
+    }
+  }
+}
